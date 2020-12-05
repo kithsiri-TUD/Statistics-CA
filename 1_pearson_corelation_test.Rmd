@@ -1,0 +1,274 @@
+---
+title: "1_pearson_corelation"
+author: "kithsiri Jayakody"
+date: "11/9/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+As the first step in here, I'm going to load the data to the R envirnment.
+
+```{r}
+setwd('D:/statistics')
+# dataset is loading and converting the character based data types to factors
+df = read.csv('sperformance-dataset.csv',stringsAsFactors = F)
+
+# converting the character type into factorial variables and see the conversion
+indices <- c(1,2,4:6,9:14,18:23,34,38:43)
+
+for(i in indices)
+{
+  df[[i]] <- as.factor(df[[i]])
+}
+
+```
+After loading the dataset following codeblock will install all the relavant libraries. Moreover allthe column names convert into simple before it runs.
+
+```{r}
+
+#Setting the column names to be that used in the dataset but in lowercase to make life a bit easier
+colnames(df) <- tolower(colnames(df))
+#Remember to install these packages if you haven't already done so
+
+#First check that package required is installed, if not install it
+# Specify your packages
+needed_packages <- c("pastecs", "ggplot2", "semTools", "FSA")                                    
+# Extract not installed packages
+not_installed <- needed_packages[!(needed_packages %in% installed.packages()[ , "Package"])]    
+# Install not installed packages
+if(length(not_installed)) install.packages(not_installed)                              
+
+
+
+library(pastecs) #For creating descriptive statistic summaries
+library(ggplot2) #For creating histograms with more detail than plot
+library(semTools) #For skewness and kurtosis
+
+```
+In my first exersise I'm going to check weather there is any relationship between the students age
+and the first grade maths marks. In here following display the description of two variables.
+
+Concept: Students age 
+Variable name: age 
+Variable type: scale
+Independent variable
+
+Concept: maths first period grade
+Grade mark achieved for the maths subject
+Variable: mG1
+Variable type: scale
+Dependent/Outcome variable
+
+after identifying the related independant and depdendant variable follwing steps are followed to check weather age and mG1 are follinwg the normalized distribution or not. follwing is the hypothesis of our experiment
+
+H0: There is no relationship between age and first period maths results
+Ha: There is a relationship between age and first period maths results
+
+
+# Check the Normality for the age Variable
+
+```{r}
+
+#We will allocate the histogram to a variable to allow use to manipulate it
+gg <- ggplot(df, aes(x=age))
+
+#Change the label of the x axis
+gg <- gg + labs(x="students age")
+
+#manage binwidth and colours
+gg <- gg + geom_histogram(binwidth=2, colour="black", aes(y=..density.., fill=..count..))
+gg <- gg + scale_fill_gradient("Count", low="#DCDCDC", high="#7C7C7C")
+gg
+#adding a normal curve
+#use stat_function to compute a normalised score for each value of tpcoiss
+#pass the mean and standard deviation
+#use the na.rm parameter to say how missing values are handled
+gg <- gg + stat_function(fun=dnorm, color="red",args=list(mean=mean(df$age, na.rm=TRUE), sd=sd(df$age, na.rm=TRUE)))
+
+#to display the graph request the contents of the variable be shown
+gg
+
+```
+
+
+then we generate the Q-Q plot for the age variable to check normal distribution visually
+
+```{r}
+#Create a qqplot
+qqnorm(df$age)
+qqline(df$age, col=2) #show a line on the plot
+
+```
+by oberving the output of the Q-Q plot and the histogram it seems like it does not follow normal distribution. further with the following function I'm looking for summary statistic for the same variable age
+
+```{r}
+#stat.desc is a function from pastecs - make sure you include the basic switch=F to ensure you don't get scienfitic notation
+pastecs::stat.desc(df$age, basic=F)
+
+```
+even though it seems lik skew, we are going to calculate Standardized skewness and kurtosis and the Percentage of standardized scores falling within acceptable ranges
+as the first step we are going to calcuate the Standardized skewness and kurtosis.Standardised scores (value/std.error) for skewness between +/-2 (1.96 rounded) are considered acceptable in order to prove normal univariate distribution. 
+
+```{r}
+
+#We can make our decision based on the value of the standardised score for skew and kurtosis
+#We divide the skew statistic by the standard error to get the standardised score
+#This will indicate if we have a problem
+tpskew<-semTools::skew(df$age)
+tpkurt<-semTools::kurtosis(df$age)
+tpskew[1]/tpskew[2]
+
+tpkurt[1]/tpkurt[2]
+
+```
+
+as shown with the above result it seems that kurosis comes with in the acceptable range but the skewness is not with in the acceptable range. therefore here with I'm going to calculate the Percentage of standardized scores falling within acceptable ranges.
+
+```{r}
+
+#and by calculating the percentage of standardised scores for the variable itself that are outside our acceptable range
+#This will tell us how big a problem we have
+# Calculate the percentage of standardised scores that are greated than 1.96
+# the perc function which is part of the FSA package which calculate the percentage that are within a range - you can look for greater than "gt", greater than or equal "geq", "gt", less than or equal "leq",  or less than "lt"),
+# scale is a function that creates z scores, abs gets absolute value
+
+df_age<- abs(scale(df$age))
+
+FSA::perc(as.numeric(df_age), 1.96, "gt")
+FSA::perc(as.numeric(df_age), 3.29, "gt")
+
+```
+so  values fall outside +/- 1.96 (ignoring missing data) is 3.40% of our data Since the data is larger than 80 cases we can use +/- 3.29 as our measure 0.26% of our data So it is ok to treat as normal for the age
+variable.
+
+# Check the Normality for the maths first period Variable
+
+```{r}
+#We will allocate the histogram to a variable to allow use to manipulate it
+gg <- ggplot(df, aes(x=mg1))
+
+#Change the label of the x axis
+gg <- gg + labs(x="students maths grade(first period)")
+
+#manage binwidth and colours
+gg <- gg + geom_histogram(binwidth=2, colour="blue", aes(y=..density.., fill=..count..))
+gg <- gg + scale_fill_gradient("Count", low="#DCDCDC", high="#7C7C7C")
+gg
+#adding a normal curve
+#use stat_function to compute a normalised score for each value of tpcoiss
+#pass the mean and standard deviation
+#use the na.rm parameter to say how missing values are handled
+gg <- gg + stat_function(fun=dnorm, color="red",args=list(mean=mean(df$mg1, na.rm=TRUE), sd=sd(df$mg1, na.rm=TRUE)))
+
+#to display the graph request the contents of the variable be shown
+gg
+
+```
+above charts visually shows that the dataset is normal distribution. then for further clarification do q-q plot.
+
+```{r}
+#Create a qqplot
+qqnorm(df$mg1)
+qqline(df$mg1, col=2) #show a line on the plot
+
+
+```
+it shows that the values are fallen to the straight line. it depicts that it has a normal distribution,
+
+ further with the following function I'm looking for summary statistic for the same variable mg1
+
+```{r}
+
+#stat.desc is a function from pastecs - make sure you include the basic switch=F to ensure you don't get scienfitic notation
+pastecs::stat.desc(df$age, basic=F)
+
+```
+
+eventhough it is not skew, for further confirmation of normal distribution, we are going to calculate Standardized skewness and kurtosis and the Percentage of standardized scores falling within acceptable ranges
+as the first step we are going to calcuate the Standardized skewness and kurtosis.Standardised scores (value/std.error) for skewness between +/-2 (1.96 rounded) are considered acceptable in order to prove normal univariate distribution. 
+
+```{r}
+#We can make our decision based on the value of the standardised score for skew and kurtosis
+#We divide the skew statistic by the standard error to get the standardised score
+#This will indicate if we have a problem
+tpskew<-semTools::skew(df$mg1)
+tpkurt<-semTools::kurtosis(df$mg1)
+tpskew[1]/tpskew[2]
+
+tpkurt[1]/tpkurt[2]
+
+```
+as shown with the above result it seems that kurosis and skew didn't appear with in acceptable range. therefore here with I'm going to calculate the Percentage of standardized scores falling within acceptable ranges. 
+
+```{r}
+
+#and by calculating the percentage of standardised scores for the variable itself that are outside our acceptable range
+#This will tell us how big a problem we have
+# Calculate the percentage of standardised scores that are greated than 1.96
+# the perc function which is part of the FSA package which calculate the percentage that are within a range - you can look for greater than "gt", greater than or equal "geq", "gt", less than or equal "leq",  or less than "lt"),
+# scale is a function that creates z scores, abs gets absolute value
+
+df_mg1<- abs(scale(df$mg1))
+
+FSA::perc(as.numeric(df_mg1), 1.96, "gt")
+FSA::perc(as.numeric(df_mg1), 3.29, "gt")
+
+
+```
+so  values fall outside +/- 1.96 (ignoring missing data) is 3.40% of our data Since the data is larger than 80 cases we can use +/- 3.29 as our measure 0.0% of our data So it is ok to treat as normal for the mg1
+variable. so as both variable are with in the acceptable range of normal distribution, here with I'm using the pearson corelation (paramatric test)
+
+# corelation test
+
+first of all generting the scatter plot with indepdenant and depdendant variable.
+
+
+```{r}
+#Simple scatterplot of feeling of control and perceived stress
+#aes(x,y)
+scatter <- ggplot(df, aes(df$age, df$mg1))
+
+#Add a regression line
+scatter + geom_point() + geom_smooth(method = "lm", colour = "Red", se = F) + labs(x = "age", y = "maths score") 
+
+```
+
+
+after oberving the scatter plot we check pearson corelation.
+
+```{r}
+#Pearson Correlation
+stats::cor.test(df$age, df$mg1, method='pearson')
+
+
+```
+According to the experiment following suggestion has taken.
+
+The relationship between students age  and maths grade (maths subject grade for the first period) was investigated using a Pearson correlation.   A weak negative correlation was found (r =-.117, n=380, p<.05).”
+
+# as there are few skewness here with I tested non paramatric test for the same variable age and mg1
+
+```{r}
+cor.test(df$age, df$mg1, method = "spearman")
+
+```
+According to the non paramatic experiment following suggestion has taken.
+
+The relationship between students age  and maths grade (maths subject grade for the first period) was investigated using a Pearson correlation.   A weak negative correlation was found (r =-.111, n=380, p<.05).
+
+
+```{r}
+cor.test(df$age, df$mg1, method = "kendall")
+```
+The relationship between students age  and maths grade (maths subject grade for the first period) was investigated using a Pearson correlation.  no relationship was found (r =-.08, n=380, p<.05).
+
+
+
+so it is evidant that non paramatic test didn't give any significant result over parametric one.
