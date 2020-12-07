@@ -1,0 +1,223 @@
+---
+title: "Regression_age_mG1"
+author: "kithsiri Jayakody"
+date: "12/6/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+Question:
+there is a relationship between mG1 score and the pG1?
+.
+
+Hypothesis (Two-tailed)
+
+H0: There are no relationship between maths first grade score and protuguese first grade score
+HA: There is a relationship between  maths first grade score and protuguese first grade score
+
+as the first step need to load the dataset
+
+```{r}
+
+setwd('D:/statistics')
+# dataset is loading and converting the character based data types to factors
+df = read.csv('sperformance-dataset.csv',stringsAsFactors = F)
+
+# converting the character type into factorial variables and see the conversion
+indices <- c(1,2,4:6,9:14,18:23,34,38:43)
+
+for(i in indices)
+{
+  df[[i]] <- as.factor(df[[i]])
+}
+
+
+
+```
+
+following code block is used to load the required files.
+
+```{r}
+needed_packages <- c("foreign", "stats", "lm.beta", "stargazer", "ggplot2")                      
+# Extract not installed packages
+not_installed <- needed_packages[!(needed_packages %in% installed.packages()[ , "Package"])]    
+# Install not installed packages
+if(length(not_installed)) install.packages(not_installed) 
+
+library(stats)
+library(ggplot2)
+library(foreign) #To work with SPSS data
+library(lm.beta) #Will allow us to isolate the beta co-efficients
+library(stargazer)#For formatting outputs/tables
+```
+
+following code block is used to test the normal distribution of the variable mg1
+
+```{r}
+
+#We will allocate the histogram to a variable to allow use to manipulate it
+gg <- ggplot(df, aes(x=df$mG1))
+gg <- gg+ggtitle("Figure 1 - Histogram for Normalised maths First Grade results")
+gg <- gg + labs(x="Normalised Exam Results maths First Grade")
+#manage binwidth and colours
+gg <- gg + geom_histogram(binwidth=1, colour="black", aes(y=..density.., fill=..count..))
+gg <- gg + scale_fill_gradient("Count", low="#DCDCDC", high="#7C7C7C")
+#adding a normal curve
+#use stat_function to compute a normalised score for each value of normexam
+#pass the mean and standard deviation
+#use the na.rm parameter to say how missing values are handled
+gg <- gg + stat_function(fun=dnorm, color="red",args=list(mean=mean(df$mG1, na.rm=TRUE), sd=sd(df$mG1, na.rm=TRUE)))
+
+#to display the graph request the contents of the variable be shown
+gg
+
+#Create a qqplot
+qqnorm(df$mG1, main="Figure 2 - QQ Plot for Normalised Exam Results Age 16")
+qqline(df$mG1, col=2) #show a line on the plot
+
+
+
+#Get summary statistics - we know it the variable is normal so we will go ahead with it
+mean(df$mG1)
+sd(df$mG1)
+length(df$mG1)
+
+#We can make our decision based on the value of the standardised score for skew and kurtosis
+#We divide the skew statistic by the standard error to get the standardised score
+#This will indicate if we have a problem
+tpskew<-semTools::skew(df$mG1)
+tpkurt<-semTools::kurtosis(df$mG1)
+tpskew[1]/tpskew[2]
+
+tpkurt[1]/tpkurt[2]
+
+#checked standardise the scores
+
+#and by calculating the percentage of standardised scores for the variable itself that are outside our acceptable range
+#This will tell us how big a problem we have
+# Calculate the percentage of standardised scores that are greated than 1.96
+# the perc function which is part of the FSA package which calculate the percentage that are within a range - you can look for greater than "gt", greater than or equal "geq", "gt", less than or equal "leq",  or less than "lt"),
+# scale is a function that creates z scores, abs gets absolute value
+
+ztotsas<- abs(scale(df$mG1))
+
+FSA::perc(as.numeric(ztotsas), 1.96, "gt")
+FSA::perc(as.numeric(ztotsas), 3.29, "gt")
+```
+
+Reporting the test results
+
+Total maths first period(mg1) results was assessed for normality. Visual inspection of the histogram and QQ-Plot (see Figure 1 and Figure 2) identified some issues with skewness and kurtosis. The standardised score for skewness 2.20  can not be considered acceptable using the criteria proposed by West, Finch and Curran (1996), Similary the standardised score for kurtosis 3.40 was also outside the acceptable range. However as 100% of standardised scores for maths period one makrs  values fall outside +/- 1.96 (ignoring missing data) is 3.14% of our data Since the data is larger than 80 cases we can use +/- 3.29 as our measure 0% of our data  using the guidance of Field, Miles and Field (2013) the data can be considered to approximate a normal distribution (m=10.86, sd=3.34,n=382)
+
+
+
+
+then the following code block is used to test the distribution of the variable pG1
+
+```{r}
+
+#We will allocate the histogram to a variable to allow use to manipulate it
+gg <- ggplot(df, aes(x=df$pG1))
+gg <- gg+ggtitle("Figure 1 - Histogram for Normalised maths First Grade results")
+gg <- gg + labs(x="Normalised Exam Results maths First Grade")
+#manage binwidth and colours
+gg <- gg + geom_histogram(binwidth=1, colour="black", aes(y=..density.., fill=..count..))
+gg <- gg + scale_fill_gradient("Count", low="#DCDCDC", high="#7C7C7C")
+#adding a normal curve
+#use stat_function to compute a normalised score for each value of normexam
+#pass the mean and standard deviation
+#use the na.rm parameter to say how missing values are handled
+gg <- gg + stat_function(fun=dnorm, color="red",args=list(mean=mean(df$pG1, na.rm=TRUE), sd=sd(df$pG1, na.rm=TRUE)))
+
+#to display the graph request the contents of the variable be shown
+gg
+
+#Create a qqplot
+qqnorm(df$pG1, main="Figure 2 - QQ Plot for Normalised Exam Results Age 16")
+qqline(df$pG1, col=2) #show a line on the plot
+
+
+
+#Get summary statistics - we know it the variable is normal so we will go ahead with it
+mean(df$pG1)
+sd(df$mG1)
+length(df$pG1)
+
+#We can make our decision based on the value of the standardised score for skew and kurtosis
+#We divide the skew statistic by the standard error to get the standardised score
+#This will indicate if we have a problem
+tpskew<-semTools::skew(df$pG1)
+tpkurt<-semTools::kurtosis(df$pG1)
+tpskew[1]/tpskew[2]
+
+tpkurt[1]/tpkurt[2]
+
+
+#checked standardise the scores
+
+#and by calculating the percentage of standardised scores for the variable itself that are outside our acceptable range
+#This will tell us how big a problem we have
+# Calculate the percentage of standardised scores that are greated than 1.96
+# the perc function which is part of the FSA package which calculate the percentage that are within a range 
+#- you can look for greater than "gt", greater than or equal "geq", "gt", less than or equal "leq",  or less than "lt"),
+# scale is a function that creates z scores, abs gets absolute value
+
+ztotsas<- abs(scale(df$pG1))
+
+FSA::perc(as.numeric(ztotsas), 1.96, "gt")
+FSA::perc(as.numeric(ztotsas), 3.29, "gt")
+
+```
+
+Reporting the test results
+
+Total protuguese first period(pg1) results was assessed for normality. Visual inspection of the histogram and QQ-Plot (see Figure 1 and Figure 2) identified some issues with skewness and kurtosis. The standardised score for skewness -1.20  can not be considered acceptable using the criteria proposed by West, Finch and Curran (1996), Similary the standardised score for kurtosis 3.34 was also outside the acceptable range. However as 100% of standardised scores for maths period one makrs  values fall outside +/- 1.96 (ignoring missing data) is 4.17% of our data Since the data is larger than 80 cases we can use +/- 3.29 as our measure 0.26% of our data  using the guidance of Field, Miles and Field (2013) the data can be considered to approximate a normal distribution (m=12.12, sd=3.34,n=382)
+
+
+
+.
+following code block is used to explore the relationship between  mG1 and pG1, Calculate the correlation for these two variables 
+with peason as the distrbutions are normal. (Before we create a linear regression model it is worth exploring the nature of the relationship between the response variable and this predictor variable.)
+)
+
+```{r}
+
+#Simple scatterplot of standlrt and normexm
+#aes(x,y)
+scatter <- ggplot2::ggplot(df, aes(mG1, pG1))
+#Add a regression line
+scatter + geom_point() + geom_smooth(method = "lm", colour = "Red", se = F) + labs(x = "Maths First Period Score", y = "Protuguese First Period Score") 
+
+#Note: When running this in RStudio the output will appear un the Plots tab on the right hand side, if not visible click the Plots tab
+
+
+#Pearson Correlation
+stats::cor.test(df$mG1, df$pG1, method='pearson')
+
+```
+there appear to be a strong statistically significant positive linear relationship. – R2 = 0.32, r=0.568. 
+
+
+```{r}
+
+model1<-lm(df$pG1~df$mG1)
+anova(model1)
+summary(model1)
+lm.beta::lm.beta(model1)
+stargazer(model1, type="text") #Tidy output of all the required stats
+
+```
+
+According to the above statistics following conclusion were taken.
+
+The F statistic looks at whether the model as  whole is statistically significant 
+
+in our case In this case there is only one independent variable, mG1
+The F-test is testing if this one variable predicts the exam scores of protuguese first Grade (pG1) better than if we used the average score of pG1 to predict values for all students. acording to the ANOVA It seems it does as it is statistically significant p < 0.001. according to the R2 score, the explanablity of the pG1 with the support of mG1 is .32. Based on the coefficient we can get the following results. pG1 = 7.40 + .43mG1
+
+
