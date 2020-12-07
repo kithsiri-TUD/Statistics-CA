@@ -1,0 +1,85 @@
+---
+title: "2_centralTendancy"
+author: "kithsiri Jayakody"
+date: "11/5/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This mark down file is using to show the mean, median and the mode value of our dataset
+
+```{r}
+# dataset is loading and converting the character based data types to factors
+df = read.csv('sperformance-dataset.csv',stringsAsFactors = F)
+
+# converting the character type into factorial variables and see the conversion
+indices <- c(1,2,4:6,9:14,18:23,34,38:43)
+
+for(i in indices)
+{
+  df[[i]] <- as.factor(df[[i]])
+}
+```
+
+calculating the mean, median and mode of few continous variable of the dataset - age column
+```{r}
+# age variable
+
+mean(df$age)
+median(df$age)
+
+# there is no mode function with r. there fore create a user function to calculate mode of a data # set in R. This function takes the vector as input and gives the mode value as output.
+
+
+# Create the function.
+getmode <- function(v) {
+   uniqv <- unique(v)
+   uniqv[which.max(tabulate(match(v, uniqv)))]
+}
+
+# calling the function and passing the age column to get the mode
+
+result <- getmode(df$age)
+print(result)
+```
+
+calculating the mean, median and mode of few continous variable of the dataset - mG1 ( maths first
+period grade)
+```{r}
+
+# maths first grade  variable
+
+mean(df$mG1)
+median(df$mG1)
+
+
+# calling the function and passing the age column to get the mode
+
+result <- getmode(df$mG1)
+print(result)
+```
+calculating the mean, median and mode of few continous variable of the dataset - pG1 ( protuguese first
+period grade)
+
+```{r}
+
+# protuguese first grade  variable
+
+mean(df$pG1)
+median(df$pG1)
+
+
+# calling the function and passing the age column to get the mode
+
+result <- getmode(df$pG1)
+print(result)
+
+```
+
+
+

@@ -1,0 +1,94 @@
+---
+title: "5_boxplots_details"
+author: "kithsiri Jayakody"
+date: "11/5/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. this is using to display how to generate the boxplots of different values. this R file shows the box plot based on mG1. first few code block just generate the  boxplot based on all the records. and later boxplots were generated based on category of 
+sex,internet and school as well.
+
+```{r}
+# dataset is loading and converting the character based data types to factors
+
+setwd('D:/statistics')
+df = read.csv('sperformance-dataset.csv',stringsAsFactors = F)
+
+# converting the character type into factorial variables and see the conversion
+indices <- c(1,2,4:6,9:14,18:23,34,38:43)
+
+for(i in indices)
+{
+  df[[i]] <- as.factor(df[[i]])
+}
+
+```
+
+
+following code  just display the basic boxplot of the mG1 value - math grade 1
+
+
+```{r}
+library(ggplot2)
+# Basic box plot
+p <- ggplot(df, aes(x=sex, y=mG1)) + 
+  geom_boxplot()
+p
+
+```
+check the mG1 with out lier values. generated graphs shows that there are no outliers
+
+```{r}
+
+ggplot(df, aes(x=sex, y=mG1)) + 
+  geom_boxplot(outlier.colour="red", outlier.shape=8,
+                outlier.size=4)
+
+```
+box plot for mG1 variable with dotted line is displayed here.
+
+```{r}
+p + geom_dotplot(binaxis='y', stackdir='center', dotsize=1)
+```
+following code display the box plot generated  for multiple grouping. this example just show the
+grouping based on sex and internet.
+
+```{r}
+
+# Change box plot colors by groups
+p<-ggplot(df, aes(x=sex, y=mG1, fill=internet)) +
+  geom_boxplot()
+# Change the position
+
+p
+
+```
+following code display the box plot generated  for multiple grouping. this example just show the
+grouping based on Fjob
+
+```{r}
+
+p<-ggplot(df, aes(x=Fjob, y=mG1, color=Fjob)) +
+  geom_boxplot()
+# Change the position
+p
+```
+generate the box plot based on mother job
+
+```{r}
+
+p<-ggplot(df, aes(x=Mjob, y=mG1, color=sex)) +
+  geom_boxplot()
+# Change the position
+p
+
+```
+
+
+

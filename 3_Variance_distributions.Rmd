@@ -1,0 +1,55 @@
+---
+title: "3_Variations"
+author: "kithsiri Jayakody"
+date: "11/5/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+loading the dataset and converting the character type variables to factors
+
+```{r cars}
+# dataset is loading and converting the character based data types to factors
+setwd('D:/statistics')
+df = read.csv('sperformance-dataset.csv',stringsAsFactors = F)
+
+# converting the character type into factorial variables and see the conversion
+indices <- c(1,2,4:6,9:14,18:23,34,38:43)
+
+for(i in indices)
+{
+  df[[i]] <- as.factor(df[[i]])
+}
+```
+
+
+calculating the variance, Standard deviation and quantiles with of few continous variable of the dataset - age variable
+
+```{r}
+var(df$age)
+sd(df$age)
+quantile(df$age)
+
+```
+calculating the variance, Standard deviation and quantiles with of few continous variable of the dataset - maths first grade variable
+
+```{r}
+var(df$mG1)
+sd(df$mG1)
+quantile(df$mG1)
+
+```
+calculating the variance, Standard deviation and quantiles with of few continuous variable of the dataset - protuguese first grade variable
+```{r}
+var(df$pG1)
+sd(df$pG1)
+quantile(df$pG1)
+
+```
+
+```

@@ -1,0 +1,60 @@
+---
+title: "This R markdown file shows the Data set preparation for Discriptive Analytics and Inference Analytics"
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### load the dataset
+```{r}
+setwd('D:/statistics')
+df = read.csv('sperformance-dataset.csv',stringsAsFactors = F)
+```
+
+### to view the dataframe
+```{r}
+View(df)
+
+```
+
+### check the datatype of the loaded file
+
+```{r}
+str(df)
+
+# look at the number of columns
+```
+### check number of columns and rows
+```{r}
+# look at the number of columns
+ncol(df)
+# look at number of rows
+nrow(df)
+```
+### checking for any null value of the dataset
+```{r}
+sum(is.na(df))
+# check weather the dataset mG1, mG2,mG3 and pG1, pG2, pG3 has 0 values. there are no null NA values with the dataset.
+```
+
+```
+converting the Character based data types to Factors
+```{r}
+# converting the character type into factorial variables and see the conversion
+indices <- c(1,2,4:6,9:14,18:23,34,38:43)
+
+for(i in indices)
+{
+  df[[i]] <- as.factor(df[[i]])
+}
+
+str(df)
+
+```
+
+

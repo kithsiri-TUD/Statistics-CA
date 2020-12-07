@@ -1,0 +1,96 @@
+---
+title: "6_Visuals_for_categorical_variables"
+author: "kithsiri Jayakody"
+date: "11/5/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+```{r}
+library(dplyr)
+library(ggplot2)
+```
+
+
+this R markdown file consists of Visuals for categorical variables.
+
+```{r}
+# dataset is loading and converting the character based data types to factors
+setwd('D:/statistics')
+df = read.csv('sperformance-dataset.csv',stringsAsFactors = F)
+
+# converting the character type into factorial variables and see the conversion
+indices <- c(1,2,4:6,9:14,18:23,34,38:43)
+
+for(i in indices)
+{
+  df[[i]] <- as.factor(df[[i]])
+}
+```
+
+display the number of records based on sex. in here dplyr package was used to generate the bar plot
+
+```{r}
+# group the number of records based on sex 
+
+df_sex = df %>% group_by(sex) %>% summarise(count=n())
+
+# use the box plot to visualize the data
+
+bp<- ggplot(df_sex, aes(x="", y=count, fill=sex))+
+geom_bar(width = 1, stat = "identity")
+bp
+
+
+```
+following code is used to generate the pie chart for the dataset with the sex category
+
+```{r}
+
+
+pie <- bp + coord_polar("y", start=0)
+pie
+```
+
+following code block generate the pie chart based on internet usage or not category
+
+```{r}
+
+# group the number of records based on sex 
+
+df_internet = df %>% group_by(internet) %>% summarise(count=n())
+
+# use the box plot to visualize the data
+
+bp<- ggplot(df_internet, aes(x="", y=count, fill=internet))+
+geom_bar(width = 1, stat = "identity")
+bp <- bp + coord_polar("y", start=0)
+bp
+
+
+```
+following code display  the categorization based on father's job
+
+```{r}
+
+# group the number of records based on father's job 
+
+df_Fjob = df %>% group_by(Fjob) %>% summarise(count=n())
+
+# use the box plot to visualize the data
+
+bp<- ggplot(df_Fjob, aes(x="", y=count, fill=Fjob))+
+geom_bar(width = 1, stat = "identity")
+bp <- bp + coord_polar("y", start=0)
+bp
+
+
+```
+
+
+
