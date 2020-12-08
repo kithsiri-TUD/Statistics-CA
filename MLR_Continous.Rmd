@@ -1,0 +1,233 @@
+---
+title: "MLR_continous"
+author: "kithsiri Jayakody"
+date: "12/7/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+
+needed_packages <- c("foreign",  "lm.beta", "stargazer", "car", "ppcor", "userfriendlyscience")                      
+# Extract not installed packages
+not_installed <- needed_packages[!(needed_packages %in% installed.packages()[ , "Package"])]    
+# Install not installed packages
+if(length(not_installed)) install.packages(not_installed) 
+
+
+library(foreign) #To work with SPSS data
+library(lm.beta) #Will allow us to isolate the beta co-efficients
+library(stargazer)#For formatting outputs/tables
+
+library(userfriendlyscience)#Anova
+library(ppcor)#partial correlation
+library(car)#Levene's test
+
+```
+
+In here the first example of Multiple regression model is developed to check weather there is any relationship bitween dependant variable pG1 vs mG1 with age.
+
+
+hypothesis
+
+h0= there is no relationship between dependant variable pG1 vs and independent mG1 with age.
+h1 = there is a relationship between dependant variable pG1 vs and independent mG1 with age.
+
+following code is used to load the dataset
+
+```{r}
+
+setwd('D:/statistics')
+# dataset is loading and converting the character based data types to factors
+df = read.csv('sperformance-dataset.csv',stringsAsFactors = F)
+
+# converting the character type into factorial variables and see the conversion
+indices <- c(1,2,4:6,9:14,18:23,34,38:43)
+
+for(i in indices)
+{
+  df[[i]] <- as.factor(df[[i]])
+}
+
+```
+
+develop a multiple regression model with two continous variables
+
+
+# checking the condition of the modell1 developed with maths first period results and the age as predictors
+# depdendant variable : protuguese first period results
+
+
+```{r}
+
+
+model1<-lm(df$pG1 ~ df$mG1 + df$age)
+stargazer::stargazer(model1, type="text") #Tidy output of all the required stats
+```
+
+A multiple regression analysis was conducted to determine if a student’s maths score and the age  could predict a student’s protuguese score. 
+
+The F-test is testing if this one variable predicts the exam scores of Portuguese first Grade (pG1) better than if we used the average score of pG1 to predict values for all students. according to the test It seems it does as it is statistically significant p < 0.01. according to the R2 score, the explainability of the pG1 with the support of mG1 is .430 and the age is -0.095  Based on the coefficient we can get the following results. pG1 = 9.01 + .43mG1 - 0.095age. 
+
+
+MLR with the mG1 and the mG2 to predict the pG1 ( predicting the pG1 results based on the maths first period result and the maths second period results)
+
+#########################################################
+
+
+
+
+
+checking the condition of the model 1 
+
+```{r}
+
+plot(model1)# Plots - first and third are the ones of interest for homocedasticity
+
+
+#Influential Outliers - Cook's distance
+cooksd<-sort(cooks.distance(model1))
+# plot Cook's distance
+plot(cooksd, pch="*", cex=2, main="Influential Obs by Cooks distance")  
+abline(h = 4*mean(cooksd, na.rm=T), col="red")  # add cutoff line
+text(x=1:length(cooksd)+1, y=cooksd, labels=ifelse(cooksd>4*mean(cooksd, na.rm=T),names(cooksd),""), col="red")  # add labels
+
+
+#find rows related to influential observations
+influential <- as.numeric(names(cooksd)[(cooksd > 4*mean(cooksd, na.rm=T))])  # influential row numbers
+stem(influential)
+head(df[influential, ])  # influential observations.
+
+
+car::outlierTest(model1) # Bonferonni p-value for most extreme obs - Are there any cases where the outcome variable has an unusual variable for its predictor values?
+
+car::leveragePlots(model1) # leverage plots
+
+
+#Create histogram and a density plot of the residuals
+plot(density(resid(model1))) 
+
+#Create a QQ plot qPlot(model, main="QQ Plot") #qq plot for studentized resid 
+car::qqPlot(model1, main="QQ Plot Model 2") #qq plot for studentized resid
+
+
+#Collinearity
+vifmodel<-car::vif(model1)
+vifmodel
+#Tolerance
+1/vifmodel
+
+```
+
+```{r}
+
+#Collinearity
+vifmodel<-car::vif(model1)
+vifmodel
+#Tolerance
+1/vifmodel
+
+```
+A multiple regression analysis was conducted to determine if a student’s score for maths first period results and the age  results could predict a student’s protuguese results.
+
+
+Examination of the histogram, normal P-P plot of standardised residuals and the scatterplot of the dependent variable, and standardised residuals showed that the some outliers existed. However, examination of the standardised residuals showed that none could be considered to have undue influence (95% within limits of -1.96 to plus 1.96 and none with Cook’s distance >1 as outlined in Field (2013). Examination for multicollinearity showed that the tolerance and variance influence factor measures were n within acceptable levels (tolerance >0.4, VIF <2.5 ) as outlined in Tarling (2008). The scatterplot of standardised residuals showed that the data met the assumptions of homogeneity of variance and linearity. The data also meets the assumption of non-zero variances of the predictors. 
+
+
+
+
+
+
+In here the first example of Multiple regression model is developed to check weather there is any relationship bitween dependant variable pG1 vs mG1 with mG2
+
+
+
+
+hypothesis
+
+h0= there is no relationship between dependant variable pG1 vs and independent mG1 with mG2
+h1 = there is a relationship between dependant variable pG1 vs and independent mG1 with mG2
+
+
+
+
+```{r}
+
+model2<-lm(df$pG1 ~ df$mG1 + df$mG2)
+stargazer::stargazer(model2, type="text") #Tidy output of all the required stats
+
+```
+
+A multiple regression analysis was conducted to determine if a student’s maths score and the maths second score  could predict a student’s protuguese first grade score. 
+
+The F-test is testing if this one variable predicts the exam scores of Portuguese first Grade (pG1) better than if we used the average score of pG1 to predict values for all students. according to the test It seems it does as it is statistically significant p < 0.01. according to the R2 score it is .328, the explainability of the pG1 with the support of mG1 is .339 and the maths second grade score is 0.096  Based on the coefficient we can get the following results. pG1 = 9.01 + .43mG1 + 0.096age. 
+
+
+
+checking the condition of model 2.
+
+
+```{r}
+
+plot(model2)# Plots - first and third are the ones of interest for homocedasticity
+
+
+#Influential Outliers - Cook's distance
+cooksd<-sort(cooks.distance(model2))
+# plot Cook's distance
+plot(cooksd, pch="*", cex=2, main="Influential Obs by Cooks distance")  
+abline(h = 4*mean(cooksd, na.rm=T), col="red")  # add cutoff line
+text(x=1:length(cooksd)+1, y=cooksd, labels=ifelse(cooksd>4*mean(cooksd, na.rm=T),names(cooksd),""), col="red")  # add labels
+
+
+#find rows related to influential observations
+influential <- as.numeric(names(cooksd)[(cooksd > 4*mean(cooksd, na.rm=T))])  # influential row numbers
+stem(influential)
+head(df[influential, ])  # influential observations.
+
+
+car::outlierTest(model2) # Bonferonni p-value for most extreme obs - Are there any cases where the outcome variable has an unusual variable for its predictor values?
+
+car::leveragePlots(model2) # leverage plots
+
+
+#Create histogram and a density plot of the residuals
+plot(density(resid(model2))) 
+
+#Create a QQ plot qPlot(model, main="QQ Plot") #qq plot for studentized resid 
+car::qqPlot(model2, main="QQ Plot Model 2") #qq plot for studentized resid
+
+
+#Collinearity
+vifmodel<-car::vif(model2)
+vifmodel
+#Tolerance
+1/vifmodel
+
+```
+
+```{r}
+
+#Collinearity
+vifmodel<-car::vif(model2)
+vifmodel
+#Tolerance
+1/vifmodel
+
+```
+
+A multiple regression analysis was conducted to determine if a student’s score for maths first period results and the maths second period  results could predict a student’s protuguese results.
+
+
+
+Examination of the histogram, normal P-P plot of standardised residuals and the scatterplot of the dependent variable, and standardised residuals showed that the some outliers existed. However, examination of the standardised residuals showed that none could be considered to have undue influence (95% within limits of -1.96 to plus 1.96 and none with Cook’s distance >1 as outlined in Field (2013). Examination for multicollinearity showed that the tolerance and variance influence factor measures were n within acceptable levels (tolerance >0.4, VIF <2.5 ) as outlined in Tarling (2008). The scatterplot of standardised residuals showed that the data met the assumptions of homogeneity of variance and linearity. The data also meets the assumption of non-zero variances of the predictors. 
+
