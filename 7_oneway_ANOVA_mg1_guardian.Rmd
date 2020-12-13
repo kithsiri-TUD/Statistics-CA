@@ -1,0 +1,188 @@
+---
+title: "7_oneway_ANOVA_mg1_guardian"
+author: "kithsiri Jayakody"
+date: "11/9/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+In this experiment I'm going to look at an answer for the following question and for the hypothesis tests.
+
+Question:
+Does guardian impact maths first period score?
+.
+
+Hypothesis (Two-tailed)
+
+H0: There are no differences between maths first grade score  for respondents gurdiants in mother ,fater and other
+HA: There are no differences between maths first grade score  for respondents gurdiants in mother ,fater and other
+
+as the first step need to load the dataset
+
+
+```{r}
+
+setwd('D:/statistics')
+# dataset is loading and converting the character based data types to factors
+df = read.csv('sperformance-dataset.csv',stringsAsFactors = F)
+
+# converting the character type into factorial variables and see the conversion
+indices <- c(1,2,4:6,9:14,18:23,34,38:43)
+
+for(i in indices)
+{
+  df[[i]] <- as.factor(df[[i]])
+}
+
+```
+
+install the required packages
+
+```{r}
+
+#Setting the column names to be that used in the dataset
+colnames(df) <- tolower(colnames(df))
+
+needed_packages <- c("pastecs", "ggplot2", "psych", "semTools", "FSA", "sjstats", "userfriendlyscience")                      
+# Extract not installed packages
+not_installed <- needed_packages[!(needed_packages %in% installed.packages()[ , "Package"])]    
+# Install not installed packages
+if(length(not_installed)) install.packages(not_installed) 
+
+library(pastecs) #For creating descriptive statistic summaries
+library(ggplot2) #For creating histograms with more detail than plot
+library(psych) # Some useful descriptive functions
+library(semTools) #For skewness and kurtosis
+library(FSA) #For percentage
+library(sjstats) #To calculate effect size for t-test
+library(userfriendlyscience)
+
+```
+# Accessing the Normality with mg1
+
+```{r}
+#We will allocate the histogram to a variable to allow use to manipulate it
+gg <- ggplot(df, aes(x=mg1))
+gg <- gg+ggtitle("Figure 1 - maths first grade score")
+
+#Change the label of the x axis
+gg <- gg + labs(x="Maths Grade 1 score")
+
+#manage binwidth and colours
+gg <- gg + geom_histogram(binwidth=2, colour="black", aes(y=..density.., fill=..count..))
+gg <- gg + scale_fill_gradient("Count", low="#DCDCDC", high="#7C7C7C")
+
+#adding a normal curve
+#use stat_function to compute a normalised score for each value of totsas
+#pass the mean and standard deviation
+#use the na.rm parameter to say how missing values are handled
+gg <- gg + stat_function(fun=dnorm, color="red",args=list(mean=mean(df$mg1, na.rm=TRUE), sd=sd(df$mg1, na.rm=TRUE)))
+
+#to display the graph request the contents of the variable be shown
+gg
+
+```
+
+creating a q-q plot for mg 1( maths first grade subject)
+
+```{r}
+#Create a qqplot
+qqnorm(df$mg1, main="Figure 2 - maths first period marks")
+qqline(df$mg1, col=2) #show a line on the plot
+```
+generating summary statistics and checking the normality with mg1 variable with the standard skewness and curtosis.
+
+```{r}
+
+#stat.desc is a function from pastecs - make sure you include the basic switch=F to ensure you don't get scienfitic notation
+pastecs::stat.desc(df$mg1, basic=F)
+
+#We can make our decision based on the value of the standardised score for skew and kurtosis
+#We divide the skew statistic by the standard error to get the standardised score
+#This will indicate if we have a problem
+tpskew<-semTools::skew(df$mg1)
+tpkurt<-semTools::kurtosis(df$mg1)
+tpskew[1]/tpskew[2]
+
+tpkurt[1]/tpkurt[2]
+
+#and by calculating the percentage of standardised scores for the variable itself that are outside our acceptable range
+#This will tell us how big a problem we have
+# Calculate the percentage of standardised scores that are greated than 1.96
+# the perc function which is part of the FSA package which calculate the percentage that are within a range - you can look for greater than "gt", greater than or equal "geq", "gt", less than or equal "leq",  or less than "lt"),
+# scale is a function that creates z scores, abs gets absolute value
+
+ztotsas<- abs(scale(df$mg1))
+
+FSA::perc(as.numeric(ztotsas), 1.96, "gt")
+FSA::perc(as.numeric(ztotsas), 3.29, "gt")
+
+```
+
+Reporting the test results
+
+Total maths first period(mg1) results was assessed for normality. Visual inspection of the histogram and QQ-Plot (see Figure 1 and Figure 2) identified some issues with skewness and kurtosis. The standardised score for skewness 2.20  can not be considered acceptable using the criteria proposed by West, Finch and Curran (1996), Similary the standardised score for kurtosis 3.40 was also outside the acceptable range. However as 100% of standardised scores for maths period one makrs  values fall outside +/- 1.96 (ignoring missing data) is 3.14% of our data Since the data is larger than 80 cases we can use +/- 3.29 as our measure 0% of our data  using the guidance of Field, Miles and Field (2013) the data can be considered to approximate a normal distribution (m=10.86, sd=3.34,n=382)
+
+### Differences more than 2 groups - Parametric Tests
+#### ANOVA
+##### Describe maths first grade results by  ( mother ,fater and other with variable in gurdiants )
+
+checking the descriptive statistics of the group
+
+```{r}
+#Get descriptive stastitics by group - output as a matrix
+psych::describeBy(df$mg1, df$guardian.m, mat=TRUE)
+```
+
+now we conduct  bartlett's test for homogenity of variance for mg1 with guardian.m
+
+```{r}
+#Conduct Bartlett's test for homogeneity of variance in library car - the null hypothesis is that variances
+#in groups are equal so to assume homogeneity we would expect probability to not be statistically significant.
+stats::bartlett.test(mg1~ guardian.m, data=df)
+#p value is > 0.05 so the result is not statistically significant so we can assume homogeneity
+```
+According to the above result p-value is higher than 0.05 (p-value=0.8117) so the so the result is not statistically significant so we can assume homogeneity
+
+conducting the ANOVA test
+
+```{r}
+#Conduct ANOVA using the userfriendlyscience test oneway
+#In this case we can use Tukey as the post-hoc test option since variances in the groups are equal
+#If variances were not equal we would use Games-Howell
+userfriendlyscience::oneway(as.factor(df$guardian.m),y=df$mg1,posthoc='Tukey')
+
+```
+checking the effec size
+
+```{r}
+#use the aov function - same as one way but makes it easier to access values for reporting
+res2<-stats::aov(mg1~ df$guardian.m, data = df)
+
+#Get the F statistic into a variable to make reporting easier
+
+fstat<-summary(res2)[[1]][["F value"]][[1]]
+fstat
+#Get the p value into a variable to make reporting easier
+
+aovpvalue<-summary(res2)[[1]][["Pr(>F)"]][[1]]
+aovpvalue
+
+#Calculate effect
+aoveta<-sjstats::eta_sq(res2)[2]
+aoveta              
+#In the report we are using the res2 variable to retrieve the degrees of freedom
+#and the eta_sq function from the sjstats package to calculate the effect
+```
+Reporting
+
+A one-way between-group analysis of variance(ANOVA) was conducted to  explore the impact of gurdian on maths marks, participants were divided into three groups according to  their groups asguardian type(mother,fater or other). There was no 
+statistically significant difference at the p <.05 levels for the 3 groups. (F(2,379)=2.77,p>0.05. ). effect size
+calcuated with eta squared was (0.02).
