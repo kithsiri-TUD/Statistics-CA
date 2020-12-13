@@ -1,0 +1,236 @@
+---
+title: "5_paired_t_test_mg2_mg3"
+author: "kithsiri Jayakody"
+date: "11/9/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+In this experiment I'm going to look at an answer for the following question and for the hypothesis tests.
+
+Question:
+Is there a significant difference in the mean maths  second period score and the mean maths  third period score
+based on the question following hypothesis will be tested.
+
+Hypothesis (Two-tailed)
+H0: There is no difference in the mean maths  second period score and the mean maths  third period score
+HA: There is a difference in the mean maths  second period score and the mean maths  third period score
+
+as the first step following code is used to load the dataset
+
+```{r}
+
+setwd('D:/statistics')
+# dataset is loading and converting the character based data types to factors
+df = read.csv('sperformance-dataset.csv',stringsAsFactors = F)
+
+# converting the character type into factorial variables and see the conversion
+indices <- c(1,2,4:6,9:14,18:23,34,38:43)
+
+for(i in indices)
+{
+  df[[i]] <- as.factor(df[[i]])
+}
+
+```
+
+After loading the dataset following codeblock will install all the relavant libraries. Moreover allthe column names convert into simple before it runs.
+
+```{r}
+
+#Setting the column names to be that used in the dataset but in lowercase to make life a bit easier
+colnames(df) <- tolower(colnames(df))
+#Remember to install these packages if you haven't already done so
+
+needed_packages <- c("pastecs", "ggplot2", "psych", "semTools", "FSA", "car", "coin", "rstatix")                      
+# Extract not installed packages
+not_installed <- needed_packages[!(needed_packages %in% installed.packages()[ , "Package"])]    
+# Install not installed packages
+if(length(not_installed)) install.packages(not_installed) 
+
+library(pastecs) #For creating descriptive statistic summaries
+library(ggplot2) #For creating histograms with more detail than plot
+library(psych) # Some useful descriptive functions
+library(semTools) #For skewness and kurtosis
+library(FSA) #For percentage
+library(car) # For Levene's test for homogeneity of variance 
+library(effectsize) #To calculate effect size for t-test
+
+```
+
+# Check the Normality for the maths second period Variable
+
+```{r}
+#We will allocate the histogram to a variable to allow use to manipulate it
+gg <- ggplot(df, aes(x=mg2))
+
+#Change the label of the x axis
+gg <- gg + labs(x="students maths grade(second eriod)")
+
+#manage binwidth and colours
+gg <- gg + geom_histogram(binwidth=2, colour="blue", aes(y=..density.., fill=..count..))
+gg <- gg + scale_fill_gradient("Count", low="#DCDCDC", high="#7C7C7C")
+gg
+#adding a normal curve
+#use stat_function to compute a normalised score for each value of maths second grade
+#pass the mean and standard deviation
+#use the na.rm parameter to say how missing values are handled
+gg <- gg + stat_function(fun=dnorm, color="red",args=list(mean=mean(df$mg2, na.rm=TRUE), sd=sd(df$mg2, na.rm=TRUE)))
+
+#to display the graph request the contents of the variable be shown
+gg
+
+```
+above charts visually shows that the dataset is normal distribution. then for further clarification do q-q plot.
+```{r}
+#Create a qqplot
+qqnorm(df$mg2)
+qqline(df$mg2, col=2) #show a line on the plot
+```
+it shows that the values are fallen to the straight line. it depicts that it has a normal distribution,
+
+ further with the following function I'm looking for summary statistic for the same variable pg1
+ 
+```{r}
+#stat.desc is a function from pastecs - make sure you include the basic switch=F to ensure you don't get scienfitic notation
+pastecs::stat.desc(df$mg2, basic=F)
+```
+ 
+ eventhough it is not skew, for further confirmation of normal distribution, we are going to calculate Standardized skewness and kurtosis and the Percentage of standardized scores falling within acceptable ranges
+as the first step we are going to calcuate the Standardized skewness and kurtosis.Standardised scores (value/std.error) for skewness between +/-2 (1.96 rounded) are considered acceptable in order to prove normal univariate distribution.
+
+```{r}
+
+#We can make our decision based on the value of the standardised score for skew and kurtosis
+#We divide the skew statistic by the standard error to get the standardised score
+#This will indicate if we have a problem
+tpskew<-semTools::skew(df$mg2)
+tpkurt<-semTools::kurtosis(df$mg2)
+tpskew[1]/tpskew[2]
+
+tpkurt[1]/tpkurt[2]
+
+```
+as shown with the above result it seems that kurosis and skew didn't  appear with in acceptable range. therefore here with I'm  n going to calculate the Percentage of standardized scores falling within acceptable ranges.Here with these experiment I identified that the maths grade 2( second period) values distribution is normal.
+```{r}
+#and by calculating the percentage of standardised scores for the variable itself that are outside our acceptable range
+#This will tell us how big a problem we have
+# Calculate the percentage of standardised scores that are greated than 1.96
+# the perc function which is part of the FSA package which calculate the percentage that are within a range - you can look for greater than "gt", greater than or equal "geq", "gt", less than or equal "leq",  or less than "lt"),
+# scale is a function that creates z scores, abs gets absolute value
+
+df_mg2<- abs(scale(df$mg2))
+
+FSA::perc(as.numeric(df_mg2), 1.96, "gt")
+FSA::perc(as.numeric(df_mg2), 3.29, "gt")
+```
+so  values fall outside +/- 1.96 (ignoring missing data) is 4.18% of our data Since the data is larger than 80 cases we can use +/- 3.29 as our measure 0.0% of our data So it is ok to treat as normal for the mg2 variable.
+
+
+# checking the normal distribution for maths third period variable mg3
+
+
+
+```{r}
+#We will allocate the histogram to a variable to allow use to manipulate it
+gg <- ggplot(df, aes(x=mg3))
+
+#Change the label of the x axis
+gg <- gg + labs(x="students maths grade(second eriod)")
+
+#manage binwidth and colours
+gg <- gg + geom_histogram(binwidth=2, colour="blue", aes(y=..density.., fill=..count..))
+gg <- gg + scale_fill_gradient("Count", low="#DCDCDC", high="#7C7C7C")
+gg
+#adding a normal curve
+#use stat_function to compute a normalised score for each value of maths second grade
+#pass the mean and standard deviation
+#use the na.rm parameter to say how missing values are handled
+gg <- gg + stat_function(fun=dnorm, color="red",args=list(mean=mean(df$mg3, na.rm=TRUE), sd=sd(df$mg3, na.rm=TRUE)))
+
+#to display the graph request the contents of the variable be shown
+gg
+
+```
+above charts visually shows that the dataset is normal distribution. then for further clarification do q-q plot.
+```{r}
+#Create a qqplot
+qqnorm(df$mg3)
+qqline(df$mg3, col=2) #show a line on the plot
+```
+it shows that the values are fallen to the straight line. it depicts that it has a normal distribution,
+
+ further with the following function I'm looking for summary statistic for the same variable pg1
+ 
+```{r}
+#stat.desc is a function from pastecs - make sure you include the basic switch=F to ensure you don't get scienfitic notation
+pastecs::stat.desc(df$mg3, basic=F)
+```
+ 
+ eventhough it is not skew, for further confirmation of normal distribution, we are going to calculate Standardized skewness and kurtosis and the Percentage of standardized scores falling within acceptable ranges
+as the first step we are going to calcuate the Standardized skewness and kurtosis.Standardised scores (value/std.error) for skewness between +/-2 (1.96 rounded) are considered acceptable in order to prove normal univariate distribution.
+
+eventhough it is not skew, for further confirmation of normal distribution, we are going to calculate Standardized skewness and kurtosis and the Percentage of standardized scores falling within acceptable ranges
+as the first step we are going to calcuate the Standardized skewness and kurtosis.Standardised scores (value/std.error) for skewness between +/-2 (1.96 rounded) are considered acceptable in order to prove normal univariate distribution.
+
+```{r}
+#We can make our decision based on the value of the standardised score for skew and kurtosis
+#We divide the skew statistic by the standard error to get the standardised score
+#This will indicate if we have a problem
+tpskew<-semTools::skew(df$mg3)
+tpkurt<-semTools::kurtosis(df$mg3)
+tpskew[1]/tpskew[2]
+
+tpkurt[1]/tpkurt[2]
+```
+
+as shown with the above result it seems that skew didn't appear with in acceptable range. therefore here with I'm going to calculate the Percentage of standardized scores falling within acceptable ranges. 
+
+```{r}
+
+#and by calculating the percentage of standardised scores for the variable itself that are outside our acceptable range
+#This will tell us how big a problem we have
+# Calculate the percentage of standardised scores that are greated than 1.96
+# the perc function which is part of the FSA package which calculate the percentage that are within a range - you can look for greater than "gt", greater than or equal "geq", "gt", less than or equal "leq",  or less than "lt"),
+# scale is a function that creates z scores, abs gets absolute value
+
+df_mg3<- abs(scale(df$mg3))
+
+FSA::perc(as.numeric(df_mg3), 1.96, "gt")
+FSA::perc(as.numeric(df_mg3), 3.29, "gt")
+```
+so  values fall outside +/- 1.96 (ignoring missing data) is 10.47% of our data Since the data is larger than 80 cases we can use +/- 3.29 as our measure 0.0% of our data So it is ok to treat as normal for the mg3 variable. 
+
+
+conducting paired sample t-test
+
+usually we  don't need to check homogeneity of variance in paired samples. Actually, to be constant of variance of difference variable is enough. I suggest you to check homogeneity of variance in the difference variable by a simple plot.
+
+```{r}
+
+#Conduct the t-test from package stats
+#In this case we can use the var.equal = TRUE option to specify equal variances and a pooled variance estimate
+
+t.test(df$mg2,df$mg3,paired=TRUE)
+
+```
+
+calculating eta squared statistics
+
+```{r}
+eta <- (3.09)*(3.09)/((3.09)*(3.09) +(381-1))
+eta
+```
+
+
+results comparison
+
+“A paired-samples t-test was conducted to evaluate the impact of the maths grades based on differnt period. There was a statistically significant decrease in maths score from period 2  (M=10.71, SD=3.83) to period 3 (M=10.38, SD=4.68), t (381)=3.09, p<.05). The mean decrease in mean scores was 0.32 with a 95% confidence interval ranging from 0.11 to 0.53. The eta squared statistic (.02) indicated a small effect size.”
+
